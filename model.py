@@ -219,7 +219,7 @@ import numpy as np
 def sum_keepdims(arr, axis):
     """Sum along `axis` while keeping that dimension as size 1."""
     # TODO: sum along the given axis preserving the reduced dim as size 1
-    return np.sum(arr, axis=axis, keepdims=1)
+    return np.sum(arr, axis=axis, keepdims=True)
 
 # Step 30 - naive_softmax_1d (not yet solved)
 # TODO: implement
