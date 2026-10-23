@@ -127,11 +127,21 @@ def elementwise_add(a, b):
     # TODO: return a new array whose entries are the pairwise sums of a and b
     return a + b
 
-# Step 18 - elementwise_multiply (not yet solved)
-# TODO: implement
+# Step 18 - elementwise_multiply
+import numpy as np
 
-# Step 19 - scalar_broadcast_add (not yet solved)
-# TODO: implement
+def elementwise_multiply(a, b):
+    """Return the elementwise product of two same-shape arrays."""
+    # TODO: compute the elementwise (Hadamard) product of a and b
+    return a * b
+
+# Step 19 - scalar_broadcast_add
+import numpy as np
+
+def scalar_broadcast_add(arr, scalar):
+    """Return a new array equal to arr with scalar added to every element."""
+    # TODO: add a Python scalar to every element of an array via broadcasting
+    return arr + scalar
 
 # Step 20 - vector_matrix_broadcast_add (not yet solved)
 # TODO: implement
