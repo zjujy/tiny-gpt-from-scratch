@@ -525,8 +525,38 @@ def cross_entropy_loss(probs, targets):
     # TODO: gather correct-token probs, take log, average the negatives
     return -np.mean(array_log(gather_correct_token_probs(probs, targets)))
 
-# Step 66 - derive_dlogits_on_paper (not yet solved)
-# TODO: implement
+# Step 66 - derive_dlogits_on_paper
+def derive_dlogits_on_paper():
+    """Return a string summarizing the derivation of dL/dlogits for mean cross-entropy."""
+    # TODO: return a short written derivation ending in dL/dlogits = (probs - onehot(targets)) / B
+    return (
+        "Gradient of mean cross-entropy w.r.t. logits\n"
+        "---------------------------------------------\n"
+        "Let B = batch size, V = vocab size.\n"
+        "Logits z: (B, V).  Softmax probs p = softmax(z) with\n"
+        "    p[b, j] = exp(z[b, j]) / sum_k exp(z[b, k]).\n"
+        "Targets y: (B,) integer class ids; onehot(y) has shape (B, V).\n"
+        "\n"
+        "Per-example loss (negative log-likelihood of the true class):\n"
+        "    L_b = -log p[b, y[b]]\n"
+        "\n"
+        "Mean loss over the batch:\n"
+        "    L = (1 / B) * sum_b L_b\n"
+        "\n"
+        "Step 1 — derivative of the per-example NLL w.r.t. the logits.\n"
+        "Using the softmax Jacobian d p[b, j] / d z[b, i] =\n"
+        "    p[b, j] * (delta_{ij} - p[b, i]),\n"
+        "the chain rule gives the classic result\n"
+        "    dL_b / dz[b, :] = p[b, :] - onehot(y[b]).\n"
+        "Intuition: gradient pushes each predicted probability toward the\n"
+        "target (subtract 1 at the true class, 0 elsewhere).\n"
+        "\n"
+        "Step 2 — average over the batch (the 1/B from the mean loss):\n"
+        "    dL / dz = (1 / B) * sum_b (p[b, :] - onehot(y[b])).\n"
+        "\n"
+        "Final formula (shape (B, V), matching the logits):\n"
+        "    dL/dlogits = (probs - onehot(targets)) / B\n"
+    )
 
 # Step 67 - compute_dlogits (not yet solved)
 # TODO: implement
