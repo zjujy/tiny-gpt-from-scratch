@@ -929,8 +929,11 @@ def slice_positional_embedding(positional_matrix, seq_len):
     # TODO: return the leading seq_len rows of positional_matrix as a (seq_len, d_model) array.
     return slice_subblock(P, 0, seq_len, 0, P.shape[1])
 
-# Step 97 - add_token_and_positional_embeddings (not yet solved)
-# TODO: implement
+# Step 97 - add_token_and_positional_embeddings
+def add_token_and_positional_embeddings(token_emb, pos_emb):
+    """Sum token embeddings (B,T,d_model) and positional embeddings (T,d_model)."""
+    # TODO: combine token and positional embeddings into a single (B,T,d_model) tensor
+    return elementwise_add(token_emb, pos_emb)
 
 # Step 98 - embedding_sum_backward (not yet solved)
 # TODO: implement
