@@ -834,8 +834,34 @@ def layernorm_backward_divide_std(dy, cache):
     dx = dy / std
     return dx
 
-# Step 90 - layernorm_backward_full (not yet solved)
-# TODO: implement
+# Step 90 - layernorm_backward_full
+import numpy as np
+
+def layernorm_backward_full(dy, cache):
+    """Full LayerNorm backward. Return {'dx', 'dgamma', 'dbeta'}."""
+    # TODO: chain rule back through affine, divide-by-std, and subtract-mean.
+    x_hat = cache["x_hat"]
+    var = cache["var"]
+    gamma = cache["gamma"]
+    eps = cache["eps"]
+    dbeta = np.sum(dy, axis=0)
+    dgamma = np.sum(dy * x_hat, axis=0)
+
+    g = dy * gamma
+    mean_g = np.mean(g, axis=-1, keepdims=True)
+    mean_g_xhat = np.mean(
+        g * x_hat, axis=-1, keepdims=True
+    )
+
+    dx = (
+        g - mean_g - x_hat * mean_g_xhat
+    ) / np.sqrt(var + eps)
+
+    return {
+        "dx": dx,
+        "dgamma": dgamma,
+        "dbeta": dbeta
+    }
 
 # Step 91 - layernorm_backward_implementation (not yet solved)
 # TODO: implement
