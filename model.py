@@ -1342,8 +1342,64 @@ def ffn_linear_two_forward(a1, w2, b2):
     }
     return {'h2': bias['y'], 'cache': cache}
 
-# Step 134 - ffn_backward (not yet solved)
-# TODO: implement
+# Step 134 - ffn_backward
+def ffn_backward(d_out, cache):
+    """Backprop through linear2 -> ReLU -> linear1 of the FFN.
+
+    cache keys: 'x', 'w1', 'h1', 'a1', 'w2'.
+    Returns dict with keys: 'dx', 'dw1', 'db1', 'dw2', 'db2'.
+    """
+    # TODO: route d_out back through linear2, ReLU, and linear1 to get input and param grads
+    x = cache['x']
+    w1 = cache['w1']
+    h1 = cache['h1']
+    a1 = cache['a1']
+    w2 = cache['w2']
+
+    x_flat = x.reshape(-1, x.shape[-1])
+    h1_flat = h1.reshape(-1, h1.shape[-1])
+    a1_flat = a1.reshape(-1, a1.shape[-1])
+    d_out_flat = d_out.reshape(-1, d_out.shape[-1])
+
+    db2 = bias_add_backward_db(
+        d_out_flat,
+        {"b_shape": (w2.shape[1],)}
+    )
+    dw2 = linear_backward_dw(
+        d_out_flat,
+        {"x": a1_flat}
+    )
+    da1 = linear_backward_dx(
+        d_out_flat,
+        {"w": w2}
+    )
+
+    dh1 = relu_backward(
+        da1, 
+        {"x": h1_flat}
+    )
+
+    db1 = bias_add_backward_db(
+        dh1,
+        {"b_shape": (w1.shape[1], 1)}
+    )
+    dw1 = linear_backward_dw(
+        dh1,
+        {"x": x_flat}
+    )
+    dx_flat = linear_backward_dx(
+        dh1,
+        {"w": w1}
+    )
+
+    dx = dx_flat.reshape(x.shape)
+    return {
+        "dx": dx,
+        "dw1": dw1,
+        "db1": db1,
+        "dw2": dw2,
+        "db2": db2
+    }
 
 # Step 135 - residual_forward (not yet solved)
 # TODO: implement
