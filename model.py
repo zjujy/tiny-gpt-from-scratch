@@ -1401,8 +1401,11 @@ def ffn_backward(d_out, cache):
         "db2": db2
     }
 
-# Step 135 - residual_forward (not yet solved)
-# TODO: implement
+# Step 135 - residual_forward
+def residual_forward(x, sublayer_out):
+    """Return x + sublayer_out for a residual connection."""
+    # TODO: add the sublayer output to its input to form a residual connection.
+    return elementwise_add(x, s)
 
 # Step 136 - residual_backward (not yet solved)
 # TODO: implement
