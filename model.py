@@ -1670,8 +1670,19 @@ def backward_through_all_blocks(d_y, caches, blocks):
     grads.reverse()
     return d_x, grads
 
-# Step 143 - final_layernorm_forward (not yet solved)
-# TODO: implement
+# Step 143 - final_layernorm_forward
+def final_layernorm_forward(x, gamma, beta):
+    """Apply LayerNorm to a (B, T, d_model) tensor with affine params gamma, beta.
+
+    Returns (y, cache) where cache has keys 'x', 'mean', 'var', 'x_hat', 'gamma'.
+    """
+    # TODO: normalize each (b, t) position across the d_model channels, then apply gamma/beta.
+    eps = 1e-5
+    result = layernorm_forward_affine(x, gamma, beta, eps)
+    y = result["y"]
+    cache = result["cache"]
+
+    return y, cache
 
 # Step 144 - lm_head_linear_forward (not yet solved)
 # TODO: implement
