@@ -927,7 +927,7 @@ import numpy as np
 def slice_positional_embedding(positional_matrix, seq_len):
     """Return the first seq_len rows of the positional embedding matrix."""
     # TODO: return the leading seq_len rows of positional_matrix as a (seq_len, d_model) array.
-    return slice_subblock(P, 0, seq_len, 0, P.shape[1])
+    return slice_subblock(positional_matrix, 0, seq_len, 0, positional_matrix.shape[1])
 
 # Step 97 - add_token_and_positional_embeddings
 def add_token_and_positional_embeddings(token_emb, pos_emb):
@@ -1709,8 +1709,53 @@ def lm_head_linear_forward(x, w_lm, b_lm):
         "cache": cache
     }
 
-# Step 145 - full_model_forward (not yet solved)
-# TODO: implement
+# Step 145 - full_model_forward
+def full_model_forward(x_ids, model_params):
+    """Run embeddings, all blocks, final LN, and LM head; return logits and caches."""
+    # TODO: chain token+positional embeddings, Transformer blocks, final LayerNorm, and LM head.
+    B, T = x_ids.shape
+
+    tok_out, tok_cache = token_embedding_forward(
+        x_ids,
+        model_params["tok_emb"]
+    )
+
+    pos_out = slice_positional_embedding(
+        model_params["pos_emb"], T
+    )
+
+    x = add_token_and_positional_embeddings(
+        tok_out,
+        pos_out
+    )
+
+    x, block_caches = forward_through_all_blocks(
+        x,
+        model_params["blocks"]
+    )
+
+    x, ln_cache = final_layernorm_forward(
+        x,
+        model_params["ln_f"]["gamma"],
+        model_params["ln_f"]["beta"]
+    )
+
+    lm_result = lm_head_linear_forward(
+        x,
+        model_params["lm_head"]["w_lm"],
+        model_params["lm_head"]["b_lm"]
+    )
+
+    logits = lm_result["logits"]
+
+    caches = {
+        "emb": tok_cache,
+        "blocks": block_caches,
+        "ln_f": ln_cache,
+        "lm_head": lm_result["cache"]
+    }
+
+    return logits, caches
 
 # Step 146 - full_model_backward (not yet solved)
 # TODO: implement
