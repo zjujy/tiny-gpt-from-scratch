@@ -1405,7 +1405,7 @@ def ffn_backward(d_out, cache):
 def residual_forward(x, sublayer_out):
     """Return x + sublayer_out for a residual connection."""
     # TODO: add the sublayer output to its input to form a residual connection.
-    return elementwise_add(x, s)
+    return elementwise_add(x, sublayer_out)
 
 # Step 136 - residual_backward
 def residual_backward(d_y):
@@ -1413,8 +1413,31 @@ def residual_backward(d_y):
     # TODO: route the upstream gradient to both branches of the residual add.
     return np.array(d_y, copy=True), np.array(d_y, copy=True)
 
-# Step 137 - pre_layernorm_sublayer_forward (not yet solved)
-# TODO: implement
+# Step 137 - pre_layernorm_sublayer_forward
+def pre_layernorm_sublayer_forward(x, ln_params, sublayer_fn, sublayer_params):
+    # TODO: apply LayerNorm to x, run sublayer_fn on the result, then residual-add back to x.
+    gamma = ln_params['gamma']
+    beta = ln_params['beta']
+    eps = ln_params.get('eps', 1e-5)
+
+    ln_result = layernorm_forward_affine(x, gamma, beta, eps)
+    x_norm = ln_result['y']
+
+    sublayer_result = sublayer_fn(x_norm, sublayer_params)
+    sublayer_out = sublayer_result['y']
+
+    y = residual_forward(x, sublayer_out)
+
+    cache = {
+        "x": x,
+        "ln_cache": ln_result["cache"],
+        "sublayer_cache": sublayer_result["cache"]
+    }
+
+    return {
+        "y": y,
+        "cache": cache
+    }
 
 # Step 138 - transformer_block_forward (not yet solved)
 # TODO: implement
