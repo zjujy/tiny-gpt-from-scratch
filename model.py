@@ -1643,8 +1643,32 @@ def forward_through_all_blocks(x, blocks):
         caches.append(result["cache"])
     return y, caches
 
-# Step 142 - backward_through_all_blocks (not yet solved)
-# TODO: implement
+# Step 142 - backward_through_all_blocks
+def backward_through_all_blocks(d_y, caches, blocks):
+    """Backprop through a stack of Transformer blocks.
+
+    Inputs:
+      d_y     : (B, T, d_model) upstream gradient at the top of the stack
+      caches  : list of per-block forward caches
+      blocks  : list of per-block parameter dicts
+
+    Returns:
+      d_x        : (B, T, d_model) gradient at the input of the stack
+      grads_list : list of per-block parameter-gradient dicts, in block order
+    """
+    # TODO: walk the blocks in reverse, calling transformer_block_backward each step.
+    d_x = d_y
+    grads = []
+
+    for i in reversed(range(len(blocks))):
+      d_x, grads_block = transformer_block_backward(
+        d_x,
+        caches[i],
+        blocks[i]
+      )
+      grads.append(grads_block)
+    grads.reverse()
+    return d_x, grads
 
 # Step 143 - final_layernorm_forward (not yet solved)
 # TODO: implement
