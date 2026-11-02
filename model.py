@@ -1407,8 +1407,11 @@ def residual_forward(x, sublayer_out):
     # TODO: add the sublayer output to its input to form a residual connection.
     return elementwise_add(x, s)
 
-# Step 136 - residual_backward (not yet solved)
-# TODO: implement
+# Step 136 - residual_backward
+def residual_backward(d_y):
+    """Backprop through y = x + sublayer_out. Returns (d_x, d_sublayer_out)."""
+    # TODO: route the upstream gradient to both branches of the residual add.
+    return np.array(d_y, copy=True), np.array(d_y, copy=True)
 
 # Step 137 - pre_layernorm_sublayer_forward (not yet solved)
 # TODO: implement
