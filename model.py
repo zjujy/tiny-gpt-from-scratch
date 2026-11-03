@@ -1749,7 +1749,10 @@ def full_model_forward(x_ids, model_params):
     logits = lm_result["logits"]
 
     caches = {
-        "emb": tok_cache,
+        "emb": {
+            "tok_cache": tok_cache,
+            "seq_len": T
+        },
         "blocks": block_caches,
         "ln_f": ln_cache,
         "lm_head": lm_result["cache"]
@@ -1902,8 +1905,167 @@ def adam_parameter_update(param, m_hat, v_hat, lr, eps):
     # TODO: return the updated parameter array of the same shape as param.
     return param - lr * m_hat / (np.sqrt(v_hat) + eps)
 
-# Step 154 - wire_full_training_loop (not yet solved)
-# TODO: implement
+# Step 154 - wire_full_training_loop
+# def _cross_entropy(logits, targets):
+#     # logits: (B, T, V) targets: (B, T)
+#     # 返回(loss, d_logits)
+
+#     B, T, V = logits.shape
+#     lf = logits.reshape(-1, V)
+#     yf = np.asarray(targets).reshape(-1)
+
+
+
+# def wire_full_training_loop(params, train_ids, val_ids, block_size, batch_size, n_steps, lr, betas, eps):
+#     """Run the full GPT training loop for n_steps and return (updated_params, history)."""
+#     # TODO: drive sample-batch -> forward -> loss -> backward -> Adam-update for n_steps...
+
+
+import numpy as np
+
+def wire_full_training_loop(
+    params, train_ids, val_ids,
+    block_size, batch_size, n_steps,
+    lr, betas, eps
+):
+    """Train Tiny GPT using Adam."""
+
+    beta1, beta2 = betas
+    rng = np.random.default_rng(0)
+    history = []
+
+    # 为嵌套参数树创建全零 Adam 状态
+    def zeros_tree(node):
+        if isinstance(node, np.ndarray):
+            return np.zeros_like(node)
+        if isinstance(node, dict):
+            return {k: zeros_tree(v) for k, v in node.items()}
+        if isinstance(node, list):
+            return [zeros_tree(v) for v in node]
+        if isinstance(node, tuple):
+            return tuple(zeros_tree(v) for v in node)
+        return None
+
+    m = zeros_tree(params)
+    v = zeros_tree(params)
+
+    # 递归更新参数树中的每个 NumPy 数组
+    def update_tree(p, g, m_prev, v_prev, t):
+        if isinstance(p, np.ndarray):
+            m_new = adam_update_first_moment(
+                m_prev, g, beta1
+            )
+            v_new = adam_update_second_moment(
+                v_prev, g, beta2
+            )
+
+            m_hat, v_hat = adam_bias_correction(
+                m_new, v_new, beta1, beta2, t
+            )
+
+            p_new = adam_parameter_update(
+                p, m_hat, v_hat, lr, eps
+            )
+
+            return p_new, m_new, v_new
+
+        if isinstance(p, dict):
+            new_p, new_m, new_v = {}, {}, {}
+
+            for key in p:
+                pk, mk, vk = update_tree(
+                    p[key], g[key],
+                    m_prev[key], v_prev[key], t
+                )
+                new_p[key] = pk
+                new_m[key] = mk
+                new_v[key] = vk
+
+            return new_p, new_m, new_v
+
+        if isinstance(p, list):
+            results = [
+                update_tree(p[i], g[i], m_prev[i], v_prev[i], t)
+                for i in range(len(p))
+            ]
+            return (
+                [r[0] for r in results],
+                [r[1] for r in results],
+                [r[2] for r in results]
+            )
+
+        if isinstance(p, tuple):
+            results = [
+                update_tree(p[i], g[i], m_prev[i], v_prev[i], t)
+                for i in range(len(p))
+            ]
+            return (
+                tuple(r[0] for r in results),
+                tuple(r[1] for r in results),
+                tuple(r[2] for r in results)
+            )
+
+        return p, m_prev, v_prev
+
+    # ===== 完整训练循环 =====
+    for step in range(n_steps):
+
+        # 1. 取一个训练 Batch
+        x_ids, y_ids = get_batch(
+            train_ids, block_size, batch_size, rng
+        )
+
+        # 2. 前向传播
+        logits, caches = full_model_forward(
+            x_ids, params
+        )
+
+        # 3. Cross-Entropy Loss + d_logits
+        B, T, V = logits.shape
+        flat_logits = logits.reshape(-1, V)
+        targets = y_ids.reshape(-1)
+
+        # 数值稳定的 Softmax
+        shifted = flat_logits - np.max(
+            flat_logits, axis=1, keepdims=True
+        )
+
+        exp_logits = np.exp(shifted)
+        probs = exp_logits / np.sum(
+            exp_logits, axis=1, keepdims=True
+        )
+
+        N = len(targets)
+        indices = np.arange(N)
+
+        # 计算平均 Cross-Entropy Loss
+        loss = -np.log(
+            np.maximum(probs[indices, targets], 1e-12)
+        ).mean()
+
+        # Cross-Entropy 对 Logits 的梯度
+        d_logits = probs.copy()
+        d_logits[indices, targets] -= 1.0
+        d_logits /= N
+        d_logits = d_logits.reshape(B, T, V)
+
+        # 4. 完整反向传播
+        grads = full_model_backward(
+            d_logits, caches, params
+        )
+
+        # 5. Adam 更新全部模型参数
+        params, m, v = update_tree(
+            params, grads, m, v, step + 1
+        )
+
+        # 6. 保存训练 Loss
+        history.append({
+            "step": step,
+            "train_loss": float(loss)
+        })
+
+    return params, history
 
 # Step 155 - logging_and_validation_loss (not yet solved)
 # TODO: implement
