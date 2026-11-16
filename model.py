@@ -2047,8 +2047,16 @@ def sample_one_token(probs, rng):
     token_id = rng.choice(vocab_size, p=probs[0])
     return int(token_id)
 
-# Step 164 - append_token_to_sequence (not yet solved)
-# TODO: implement
+# Step 164 - append_token_to_sequence
+import numpy as np
+
+def append_token_to_sequence(context_ids, token_id):
+    """Append token_id as a new final column to context_ids of shape (1, T)."""
+    # TODO: return a (1, T+1) int array with token_id appended on the time axis
+    return np.concatenate(
+        [context_ids, [[token_id]]],
+        axis=1
+    )
 
 # Step 165 - generation_loop_for_n_steps (not yet solved)
 # TODO: implement
